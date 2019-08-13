@@ -35,6 +35,7 @@ public class StromaeClientApplication implements CommandLineRunner {
 		byte[] buffer=new byte[bufferSize];
 		FileInputStream is=new FileInputStream(args[0]);
 		int tr;
+		int c=0;
 
 		while((tr=is.read(buffer))>0){
 			byte[] td=buffer;
@@ -54,7 +55,8 @@ public class StromaeClientApplication implements CommandLineRunner {
 			long stopTime = System.currentTimeMillis();
 			long elapsedTime = stopTime - startTime;
 
-			log.info(r+" ["+elapsedTime+"]");
+			c++;
+			log.info(r+" ["+elapsedTime+"] "+c);
 		}
 
 	}
