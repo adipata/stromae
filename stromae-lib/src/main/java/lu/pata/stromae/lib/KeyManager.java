@@ -33,7 +33,7 @@ public class KeyManager {
         }
 
         for(PGPPublicKey k:pubKeys){
-            log.info("Loaded key: {}",PGPKeyHelper.getOwnerString(k));
+            log.info("Loaded key: {} with ID {}",PGPKeyHelper.getOwnerString(k),k.getKeyID());
         }
     }
 

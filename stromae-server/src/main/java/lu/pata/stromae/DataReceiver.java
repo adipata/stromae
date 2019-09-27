@@ -21,6 +21,9 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/dr")
@@ -38,20 +41,30 @@ public class DataReceiver {
     }
 
     @RequestMapping(method = RequestMethod.POST, consumes = "application/json")
-    public String postData(@RequestBody DataPackage data) throws IOException, PGPException {
-        if(data.getPacketNo()==0) FileHelper.deleteFiles(new File(folderPath),data.getFn());
+    public String postData(@RequestBody DataPackage data) {
+        try {
+            PGPPublicKey key = keyManager.getPubKey(data.getSignKeyId());
+            if (key != null) {
+                if(data.getExpiry()<System.currentTimeMillis()) throw new Exception("Cannot accept expired data");
+                byte[] signature=PGPVerify.verify(data.getSignature(), key);
 
-        PGPPublicKey key= keyManager.getPubKey(data.getSignKeyId());
-        if(key!=null){
-            PGPVerify.verify(data.getData(),key);
+                if(!Arrays.equals(signature,data.getHash())) throw new Exception("Receive data is not correctly signed.");
 
-            try (FileOutputStream output = new FileOutputStream(folderPath+data.getFn()+"."+data.getPacketNo(), false)) {
-                output.write(data.getData());
+                if (data.getPacketNo() == 0) {
+                    FileHelper.deleteFiles(new File(folderPath), data.getFn());
+                } else {
+                    if(!Files.exists(Paths.get(folderPath + data.getFn() + "." + (data.getPacketNo()-1)))) return "Unexpected packet no: "+data.getPacketNo();
+                }
+
+                try (FileOutputStream output = new FileOutputStream(folderPath + data.getFn() + "." + data.getPacketNo(), false)) {
+                    output.write(data.getData());
+                }
+                return "Ok: "+data.getFn() + " / " + data.getData().length;
+            } else {
+                return "Err: unknown sign key";
             }
-            return data.getFn()+" / "+data.getData().length;
-        } else {
-            return "Unknown sign key";
+        } catch (Exception ex){
+            return "Err: "+ex.getMessage();
         }
-
     }
 }

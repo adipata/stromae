@@ -41,6 +41,8 @@ public class StromaeClientApplication implements CommandLineRunner {
 	private String pass;
 	@Value("${app.me}")
 	private String me;
+    @Value("${app.package.validity}")
+    private Long packageValidity;
 
 	@Autowired
 	private FileRepository fileRepository;
@@ -50,10 +52,15 @@ public class StromaeClientApplication implements CommandLineRunner {
 	}
 
 	@Override
-	public void run(String... args) throws Exception {
-		scanForUpload();
+	public void run(String... args) {
 
-	}
+        try {
+            scanForUpload();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+
+    }
 
 	private void scanForUpload() throws Exception {
 		File folder=new File(folderPath);
@@ -112,10 +119,12 @@ public class StromaeClientApplication implements CommandLineRunner {
 			}
 			DataPackage data=new DataPackage();
 			data.setFn(f.getName());
-			data.setData(PGPSign.sign(PGPEncrypt.encrypt(td,encKey),signKey));
+			data.setData(PGPEncrypt.encrypt(td,encKey));
 			data.setEncKeyId(encKey.getKeyID());
 			data.setSignKeyId(signKey.getKeyID());
 			data.setPacketNo(c);
+			data.setExpiry(System.currentTimeMillis()+packageValidity);
+			data.setSignature(PGPSign.sign(data.getHash(),signKey));
 
 			long startTime = System.currentTimeMillis();
 
@@ -124,8 +133,10 @@ public class StromaeClientApplication implements CommandLineRunner {
 			long stopTime = System.currentTimeMillis();
 			long elapsedTime = stopTime - startTime;
 
-			log.info(r+" ["+elapsedTime+"] "+c);
+            log.info(r+" ["+elapsedTime+"] "+c);
 			c++;
+
+			if(!r.startsWith("Ok")) throw new Exception(r);
 		}
 	}
 }
