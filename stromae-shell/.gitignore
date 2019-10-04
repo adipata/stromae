@@ -29,10 +29,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-mvnw*
-.mvn
-*.db
-*.asc
-
-*.log
