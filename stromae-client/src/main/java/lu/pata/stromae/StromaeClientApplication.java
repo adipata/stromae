@@ -1,7 +1,7 @@
 package lu.pata.stromae;
 
 import lu.pata.stromae.domain.FileSync;
-import lu.pata.stromae.lib.DataPackage;
+import lu.pata.stromae.lib.protocol.DataPackage;
 import lu.pata.stromae.lib.FileHelper;
 import lu.pata.stromae.lib.pgp.crypto.PGPEncrypt;
 import lu.pata.stromae.lib.pgp.crypto.PGPSign;
